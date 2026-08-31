@@ -3,7 +3,7 @@
 # global var
 SCRIPT_PATH=$(readlink -f "$0")
 PROJECT_PATH=$(dirname "$SCRIPT_PATH")
-#
+
 # TODO: folder input output custom
 BULK_INPUT_DIR="$PROJECT_PATH/bulk"
 OUTPUT_DIR="$PROJECT_PATH/converted"
