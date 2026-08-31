@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+
+# global var
+SCRIPT_PATH=$(readlink -f "$0")
+PROJECT_PATH=$(dirname "$SCRIPT_PATH")
+#
+# TODO: folder input output custom
+BULK_INPUT_DIR="$PROJECT_PATH/bulk"
+OUTPUT_DIR="$PROJECT_PATH/converted"
+
+show_help() {
+  echo "
+Usage: $(basename "$SCRIPT_PATH") [OPTIONS] [FILE]
+
+Simple tools/CLI Wrapper to convert MKV video format to MP4
+
+Options:
+  -h, --help               Show this help message
+  -s, --single <file>      Convert a single MKV file
+  -b, --bulk               Convert all MKV files from input folder
+"
+}
+
+convert_file() {
+  local input_file="$1"
+  mkdir -p "$OUTPUT_DIR"
+
+  if [ ! -f "$input_file" ]; then
+    echo "Error: File '$input_file' not found!" >&2
+    return 1
+  fi
+
+  local filename
+  filename=$(basename "$input_file")
+
+  local filename_no_ext="${filename%.*}"
+  local output_file="$OUTPUT_DIR/${filename_no_ext}.mp4"
+
+  echo "Converting: '$filename' -> '${filename_no_ext}.mp4'..."
+
+  if ffmpeg -y -i "$input_file" -c copy "$output_file"; then
+    echo "Done!"
+  else
+    echo "Error: Failed to convert '$input_file'" >&2
+    return 1
+  fi
+}
+
+bulk_convert() {
+  mkdir -p "$BULK_INPUT_DIR"
+  mkdir -p "$OUTPUT_DIR"
+
+  shopt -s nullglob
+  local files=("$BULK_INPUT_DIR"/*.mkv)
+
+  if [ ${#files[@]} -eq 0 ]; then
+    echo "No .mkv files found in '$BULK_INPUT_DIR'."
+    exit 0
+  fi
+
+  echo "Found ${#files[@]} .mkv file(s) in '$BULK_INPUT_DIR'."
+
+  for file in "${files[@]}"; do
+    convert_file "$file" || echo "Skipping failed file..."
+  done
+
+  echo "Done!"
+}
+
+main() {
+  case "${1:-}" in
+    -h|--help|help)
+      show_help
+      ;;
+    -s|--single|single)
+      if [ -z "${2:-}" ]; then
+        echo "Error: Missing input file for single conversion!" >&2
+        show_help
+        exit 1
+      fi
+      convert_file "$2"
+      ;;
+    -b|--bulk|--batch|bulk|batch)
+      bulk_convert
+      ;;
+    *)
+      echo "Error: Invalid option!" >&2
+      show_help
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"
