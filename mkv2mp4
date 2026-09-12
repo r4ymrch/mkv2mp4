@@ -83,6 +83,9 @@ main() {
     -b|--bulk|--batch|bulk|batch)
       bulk_convert
       ;;
+    test)
+      echo "Just Test"
+      ;;
     *)
       echo "Error: Invalid option!" >&2
       show_help
